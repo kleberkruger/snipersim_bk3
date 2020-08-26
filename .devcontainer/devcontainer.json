@@ -1,0 +1,66 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.134.1/containers/ubuntu
+{
+	// // Using environment variables
+	// "remoteEnv": {
+	// 	"UBUNTU_VERSION": "20.04",
+	// 	"DOCKER_IMAGE": "ubuntu:${remoteEnv:UBUNTU_VERSION}-sniper-${localEnv:USER}",
+	// 	// "DOCKER_FILE": "Dockerfile.ubuntu-${remoteEnv:UBUNTU_VERSION}",
+	// },
+
+	"name": "Sniper on Ubuntu",
+	// Set image name (docker build --tag <image-name>)
+	"image": "ubuntu:20.04-sniper-${localEnv:USER}",
+	"build": {
+		"dockerfile": "../sniper/docker/Dockerfile",
+		"args": {
+			// "UBUNTU_VERSION": "${remoteEnv:UBUNTU_VERSION}"
+		}
+	},
+	
+	"workspaceMount": "source=${localWorkspaceFolder},target=/snipersim,type=bind,consistency=delegated",
+	"workspaceFolder": "/snipersim/sniper",
+
+	// "mounts": [ "source=/Volumes/CPU2017v1.0.1,target=/media/CPU2017v1.0.1,type=volume" ],
+
+	// Uncomment when using a ptrace-based debugger like C++, Go, and Rust
+	"runArgs": [
+		"--cap-add=SYS_PTRACE",
+		"--security-opt",
+		"seccomp=unconfined"
+	],
+
+	// Set *default* container specific settings.json values on container create.
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash",
+		// Python Settings
+		"python.pythonPath": "/usr/local/bin/python",
+		"python.linting.enabled": true,
+		"python.linting.pylintEnabled": true,
+		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
+		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
+		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
+		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
+		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
+		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
+	},
+	
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"ms-azuretools.vscode-docker",
+		"ms-vscode.cpptools",
+		"ms-python.python"
+	],
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "uname -a",
+
+	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
+	// "remoteUser": "root"
+}
