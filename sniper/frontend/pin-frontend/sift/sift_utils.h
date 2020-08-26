@@ -1,0 +1,1 @@
+/snipersim/sniper/frontend/pin-frontend/../../sift/sift_utils.h

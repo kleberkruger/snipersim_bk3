@@ -35,8 +35,6 @@ RUN apt-get update \
     libsqlite3-dev \
     zlib1g-dev \
     libbz2-dev \
-    g++-7 \
-    # g++-4.8 \
     #
     # For building RISC-V Tools
     autoconf \
@@ -61,10 +59,12 @@ RUN apt-get update \
     zlib1g-dev \
     #
     # Helper utilities
+    g++-7 \
     gdb \
+    valgrind \
     git \
-    # xz-utils \
     doxygen \
+    # xz-utils \
     #
     # For install Python 3
     python3 \
