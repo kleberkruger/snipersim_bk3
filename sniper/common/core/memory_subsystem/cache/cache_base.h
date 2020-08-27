@@ -60,6 +60,8 @@ class CacheBase
          SRRIP,
          SRRIP_QBS,
          RANDOM,
+         KRUGER, // Added by Kleber Kruger
+         // KRUGER_QBS, // Added by Kleber Kruger
          NUM_REPLACEMENT_POLICIES
       };
 
