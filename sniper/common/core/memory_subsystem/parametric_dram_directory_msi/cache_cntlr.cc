@@ -270,10 +270,24 @@ CacheCntlr::CacheCntlr(MemComponent::component_t mem_component,
       registerStatsMetric(name, core_id, "uncore-totaltime", &m_shmem_perf_totaltime);
       registerStatsMetric(name, core_id, "uncore-requests", &m_shmem_perf_numrequests);
    }
+
+   // Added by Kleber Kruger
+   if (m_master->m_cache->getReplacementPolicy() == CacheBase::ReplacementPolicy::KRUGER)
+   {
+      String filePath = Sim()->getConfig()->getOutputDirectory() + "/checkpoints.csv";
+      if ((dram_log_file = fopen(filePath.c_str(), "w")) == NULL)
+         fprintf(stderr, "DRAM Log File Error.\n");
+   }
 }
 
 CacheCntlr::~CacheCntlr()
 {
+   // Added by Kleber Kruger
+   if (m_master->m_cache->getReplacementPolicy() == CacheBase::ReplacementPolicy::KRUGER)
+   {
+      fclose(dram_log_file);
+   }
+
    if (isMasterCache())
    {
       delete m_master;
@@ -1742,6 +1756,79 @@ CacheCntlr::incrementQBSLookupCost()
    atomic_add_subsecondtime(stats.qbs_query_latency, latency);
 }
 
+void CacheCntlr::checkpoint()
+{
+   // printCache();
+
+   SubsecondTime now = getShmemPerfModel()->getElapsedTime(ShmemPerfModel::_SIM_THREAD);
+   fprintf(dram_log_file, "%lu\n", now.getNS());
+
+   // static SubsecondTime last = now;
+   // static SubsecondTime last;
+   // static bool first = true;
+   // SubsecondTime t = now >= last ? (now - last) : (last - now);
+   // if (now > last)
+   //    last = now;
+
+   // fprintf(dram_log_file, "%lu,%lu\n", now.getNS(), t.getNS());
+   // fprintf(dram_log_file, "%lu,%lu\n", now.getNS(), first ? now.getNS() : t.getNS());
+   // first = false;
+
+   // static UInt64 n = 1;
+   // printf("checkpoint %lu: %luns\n", n++, now.getNS());
+
+   for (UInt32 i = 0; i < m_master->m_cache->getNumSets(); i++)
+   {
+      for (UInt32 j = 0; j < m_master->m_cache->getAssociativity(); j++)
+      {
+         CacheBlockInfo *block_info = m_master->m_cache->peekBlock(i, j);
+         if (block_info->getCState() == CacheState::MODIFIED)
+            flushBlock(block_info);
+      }
+   }
+   // printCache();
+}
+
+void CacheCntlr::flushBlock(CacheBlockInfo *block_info)
+{
+   IntPtr address = m_master->m_cache->tagToAddress(block_info->getTag());
+   Byte data_buf[getCacheBlockSize()];
+   // printf("flushBlock: %lu\n", address);
+
+   updateCacheBlock(address, CacheState::SHARED, Transition::COHERENCY, data_buf, ShmemPerfModel::_SIM_THREAD);
+
+   getMemoryManager()->sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::CP_REP,
+                               MemComponent::LAST_LEVEL_CACHE, MemComponent::TAG_DIR,
+                               m_core_id_master, getHome(address), /* requester and receiver */
+                               address, data_buf, getCacheBlockSize(),
+                               HitWhere::UNKNOWN, &m_dummy_shmem_perf, ShmemPerfModel::_SIM_THREAD);
+
+   // getMemoryManager()->sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::CP_REQ,
+   //                             MemComponent::LAST_LEVEL_CACHE, MemComponent::TAG_DIR,
+   //                             m_core_id_master, m_core_id_master, /* requester and receiver */
+   //                             address, NULL, 0,
+   //                             HitWhere::UNKNOWN, &m_dummy_shmem_perf, ShmemPerfModel::_SIM_THREAD);
+}
+
+void CacheCntlr::printCache()
+{
+   printf("Cache %s\n--------------------------------------------------\n     ", m_master->m_cache->getName().c_str());
+   for (UInt32 j = 0; j < m_master->m_cache->getAssociativity(); j++)
+      printf("%2d  ", j);
+   printf("\n--------------------------------------------------\n");
+
+   for (UInt32 i = 0; i < m_master->m_cache->getNumSets(); i++)
+   {
+      printf("%4d ", i);
+      for (UInt32 j = 0; j < m_master->m_cache->getAssociativity(); j++)
+      {
+         auto cstate = m_master->m_cache->peekBlock(i, j)->getCState();
+         printf("[%c] ", cstate != CacheState::INVALID ? CStateString(cstate) : ' ');
+      }
+      printf("\n");
+   }
+   printf("\n\n");
+}
 
 /*****************************************************************************
  * handle messages from directory (in network thread)

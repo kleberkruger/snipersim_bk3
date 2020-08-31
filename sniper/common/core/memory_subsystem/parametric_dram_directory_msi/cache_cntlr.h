@@ -275,6 +275,8 @@ namespace ParametricDramDirectoryMSI
 
          ShmemPerfModel* m_shmem_perf_model;
 
+         FILE *dram_log_file; // Added by Kleber Kruger
+
          // Core-interfacing stuff
          void accessCache(
                Core::mem_op_t mem_op_type,
@@ -297,7 +299,6 @@ namespace ParametricDramDirectoryMSI
          // Cache data operations
          void invalidateCacheBlock(IntPtr address);
          void retrieveCacheBlock(IntPtr address, Byte* data_buf, ShmemPerfModel::Thread_t thread_num, bool update_replacement);
-
 
          SharedCacheBlockInfo* insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* data_buf, core_id_t requester, ShmemPerfModel::Thread_t thread_num);
          std::pair<SubsecondTime, bool> updateCacheBlock(IntPtr address, CacheState::cstate_t cstate, Transition::reason_t reason, Byte* out_buf, ShmemPerfModel::Thread_t thread_num);
@@ -347,6 +348,9 @@ namespace ParametricDramDirectoryMSI
          core_id_t getHome(IntPtr address) { return m_tag_directory_home_lookup->getHome(address); }
 
          CacheCntlr* lastLevelCache(void);
+
+         void flushBlock(CacheBlockInfo *block_info); // Added by Kleber Kruger (checkpoint)
+         void printCache();                           // Added by Kleber Kruger (test)
 
       public:
 
@@ -400,6 +404,8 @@ namespace ParametricDramDirectoryMSI
 
          bool isInLowerLevelCache(CacheBlockInfo *block_info);
          void incrementQBSLookupCost();
+
+         void checkpoint(); // Added by Kleber Kruger
 
          void enable() { m_master->m_cache->enable(); }
          void disable() { m_master->m_cache->disable(); }

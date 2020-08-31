@@ -35,7 +35,9 @@ class Cache : public CacheBase
       UInt64* m_set_usage_hist;
       #endif
 
-   public:
+      CacheBase::ReplacementPolicy m_replacement_policy; // Added by Kleber Kruger
+
+public:
 
       // constructors/destructors
       Cache(String name,
@@ -49,6 +51,8 @@ class Cache : public CacheBase
             FaultInjector *fault_injector = NULL,
             AddressHomeLookup *ahl = NULL);
       ~Cache();
+
+      CacheBase::ReplacementPolicy getReplacementPolicy() { return m_replacement_policy; } // Added by Kleber Kruger
 
       Lock& getSetLock(IntPtr addr);
 
